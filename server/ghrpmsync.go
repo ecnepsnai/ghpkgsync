@@ -56,7 +56,19 @@ func main() {
 	server.ServeFiles("repo", "/rpm")
 	server.Handle("POST", "/gh_webhook", acceptWebhook)
 
-	server.ListenAndServe("0.0.0.0:8080")
+	go func(s *router.Server) {
+		if err := startHTTPS(s); err != nil {
+			log.Panic("error starting https server: %s", err.Error())
+		}
+	}(server)
+	go func(s *router.Server) {
+		if err := startHTTP(s); err != nil {
+			log.Panic("error starting http server: %s", err.Error())
+		}
+	}(server)
+	for true {
+		time.Sleep(1 * time.Minute)
+	}
 }
 
 func downloadAsset(repo GithubRepositoryType, asset GithubAssetType) error {
