@@ -13,7 +13,7 @@ import (
 )
 
 func acceptWebhook(w http.ResponseWriter, r router.Request) {
-	log.PDebug("HTTP in", map[string]interface{}{
+	log.PDebug("Webhook recieved", map[string]interface{}{
 		"method":    r.HTTP.Method,
 		"path":      r.HTTP.URL.Path,
 		"real_ip":   w.Header().Get("X-Real-IP"),

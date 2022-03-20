@@ -43,6 +43,13 @@ func main() {
 	Config.WebhookSecret = webhookSecret
 	Config.GithubRepos = githubRepos
 
+	log.PInfo("Started ghrpmsync", map[string]interface{}{
+		"GithubUsername":    Config.GithubUsername,
+		"GithubAccessToken": Config.GithubAccessToken,
+		"WebhookSecret":     Config.WebhookSecret,
+		"GithubRepos":       Config.GithubRepos,
+	})
+
 	PullRepos()
 
 	server := router.New()

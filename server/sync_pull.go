@@ -8,6 +8,9 @@ import (
 
 func PullRepos() {
 	for _, repo := range Config.GithubRepos {
+		log.PDebug("Pulling releases from repo", map[string]interface{}{
+			"repo": repo,
+		})
 		PullRepo(repo)
 	}
 }
@@ -17,7 +20,7 @@ func PullRepo(repo string) error {
 
 	req, err := http.NewRequest("GET", apiURL+"/releases", nil)
 	if err != nil {
-		log.PError("", map[string]interface{}{
+		log.PError("Error getting releases", map[string]interface{}{
 			"repo":  repo,
 			"error": err.Error(),
 		})
@@ -27,14 +30,14 @@ func PullRepo(repo string) error {
 	req.SetBasicAuth(Config.GithubUsername, Config.GithubAccessToken)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.PError("", map[string]interface{}{
+		log.PError("Error getting releases", map[string]interface{}{
 			"repo":  repo,
 			"error": err.Error(),
 		})
 		return err
 	}
 	if resp.StatusCode != 200 {
-		log.PError("", map[string]interface{}{
+		log.PError("Error getting releases", map[string]interface{}{
 			"repo":  repo,
 			"error": fmt.Sprintf("http %d", resp.StatusCode),
 		})
@@ -42,7 +45,7 @@ func PullRepo(repo string) error {
 	}
 	results := []GithubReleaseType{}
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		log.PError("", map[string]interface{}{
+		log.PError("Error getting releases", map[string]interface{}{
 			"repo":  repo,
 			"error": err.Error(),
 		})
