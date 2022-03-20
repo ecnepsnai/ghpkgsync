@@ -29,20 +29,42 @@ func main() {
 	logtic.Log.Open()
 
 	githubUsername := os.Getenv("GITHUB_USERNAME")
+	if githubUsername == "" {
+		log.Panic("Missing required environment variable: GITHUB_USERNAME")
+	}
 	githubAccessToken := os.Getenv("GITHUB_ACCESS_TOKEN")
+	if githubAccessToken == "" {
+		log.Panic("Missing required environment variable: GITHUB_ACCESS_TOKEN")
+	}
 	githubRepos := strings.Split(os.Getenv("GITHUB_REPOS"), ",")
 
 	webhookSecret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 	if webhookSecret == "" {
-		fmt.Fprintf(os.Stderr, "Environment variable GITHUB_WEBHOOK_SECRET required\n")
-		os.Exit(1)
+		log.Panic("Missing required environment variable: GITHUB_WEBHOOK_SECRET")
+	}
+
+	info, err := os.Stat("repo")
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := os.Mkdir("repo", os.ModePerm); err != nil {
+				log.PPanic("error creating repo directory", map[string]interface{}{
+					"error": err.Error(),
+				})
+			}
+		} else {
+			log.PPanic("repo directory not accessible", map[string]interface{}{
+				"error": err.Error(),
+			})
+		}
+	}
+	if !info.IsDir() {
+		log.Panic("repo directory is not a directory")
 	}
 
 	Config.GithubUsername = githubUsername
 	Config.GithubAccessToken = githubAccessToken
 	Config.WebhookSecret = webhookSecret
 	Config.GithubRepos = githubRepos
-
 	log.PInfo("Started ghrpmsync", map[string]interface{}{
 		"GithubUsername":    Config.GithubUsername,
 		"GithubAccessToken": Config.GithubAccessToken,
