@@ -11,10 +11,37 @@ import (
 	"crypto/x509/pkix"
 	"fmt"
 	"math/big"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/ecnepsnai/web/router"
 )
+
+func getPortFromArg(argName string, defaultPort int) (port int) {
+	port = defaultPort
+	args := os.Args
+	if len(args) == 1 {
+		return
+	}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == argName {
+			if i == len(args)-1 {
+				log.Fatal("Argument %s requires a value", arg)
+			}
+			p, err := strconv.Atoi(args[i+1])
+			if err != nil {
+				log.Fatal("Argument %s requires a numeric value", arg)
+			}
+			port = p
+			return
+		}
+	}
+
+	return
+}
 
 func startHTTPS(server *router.Server) error {
 	var pKey crypto.PrivateKey
@@ -48,7 +75,8 @@ func startHTTPS(server *router.Server) error {
 		return fmt.Errorf("crypto error: %s", err.Error())
 	}
 
-	l, err := tls.Listen("tcp", "0.0.0.0:443", &tls.Config{
+	address := fmt.Sprintf("0.0.0.0:%d", getPortFromArg("--https-port", 443))
+	l, err := tls.Listen("tcp", address, &tls.Config{
 		Certificates: []tls.Certificate{
 			{
 				Certificate: [][]byte{certBytes},
@@ -57,7 +85,7 @@ func startHTTPS(server *router.Server) error {
 		},
 	})
 	log.PDebug("Listen", map[string]interface{}{
-		"address": "0.0.0.0:443",
+		"address": address,
 	})
 	if err != nil {
 		return fmt.Errorf("listen error: %s", err.Error())
@@ -66,5 +94,5 @@ func startHTTPS(server *router.Server) error {
 }
 
 func startHTTP(server *router.Server) error {
-	return server.ListenAndServe("0.0.0.0:80")
+	return server.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", getPortFromArg("--http-port", 80)))
 }

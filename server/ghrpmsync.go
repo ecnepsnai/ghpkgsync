@@ -56,8 +56,7 @@ func main() {
 				"error": err.Error(),
 			})
 		}
-	}
-	if !info.IsDir() {
+	} else if !info.IsDir() {
 		log.Panic("repo directory is not a directory")
 	}
 
