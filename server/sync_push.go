@@ -38,7 +38,7 @@ func acceptWebhook(w http.ResponseWriter, r router.Request) {
 		return
 	}
 
-	hasher := hmac.New(sha256.New, []byte(Config.WebhookSecret))
+	hasher := hmac.New(sha256.New, []byte(Config.GithubWebhookSecret))
 	if _, err := hasher.Write(body); err != nil {
 		w.WriteHeader(500)
 		return

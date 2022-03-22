@@ -6,13 +6,14 @@ import (
 	"net/http"
 )
 
-func PullRepos() {
+func pullRepos() {
 	for _, repo := range Config.GithubRepos {
 		log.PDebug("Pulling releases from repo", map[string]interface{}{
 			"repo": repo,
 		})
 		PullRepo(repo)
 	}
+	log.Debug("Finished pulling release assets from repos")
 }
 
 func PullRepo(repo string) error {
@@ -36,6 +37,7 @@ func PullRepo(repo string) error {
 		})
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		log.PError("Error getting releases", map[string]interface{}{
 			"repo":  repo,

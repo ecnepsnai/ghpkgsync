@@ -1,3 +1,4 @@
 server/repo
 server/ghrpmsync
 container/ghrpmsync
+server/ghrpmsync.env
