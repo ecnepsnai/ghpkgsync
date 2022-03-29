@@ -62,7 +62,7 @@ func startHTTPS(server *router.Server) error {
 
 	tpl := &x509.Certificate{
 		SerialNumber:          serial,
-		Subject:               pkix.Name{CommonName: ""},
+		Subject:               pkix.Name{CommonName: "ghrpmsync"},
 		NotBefore:             time.Unix(0, 0),
 		NotAfter:              time.Now().UTC().AddDate(100, 0, 0),
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageDataEncipherment,

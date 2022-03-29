@@ -6,8 +6,8 @@ LABEL org.opencontainers.image.title="ghrpmsync"
 LABEL org.opencontainers.image.description="Github RPM Sync"
 
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-    apk update && \
-    apk add createrepo_c
+    apk --no-cache update && \
+    apk --no-cache add createrepo_c
 
 ENV GITHUB_USERNAME=
 ENV GITHUB_ACCESS_TOKEN=
@@ -17,7 +17,7 @@ ENV YUM_REPO_ID=
 ENV YUM_REPO_DESCRIPTION=
 ENV YUM_REPO_BASEURL=
 
-EXPOSE 8080
+EXPOSE 80 443
 
 VOLUME [ "/repo" ]
 WORKDIR "/repo"
