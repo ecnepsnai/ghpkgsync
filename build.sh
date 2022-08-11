@@ -3,13 +3,13 @@ set -e
 
 VERSION=${1:?Version required}
 REVISION=$(git rev-parse HEAD)
-DATETIME=$(date --rfc-3339=seconds)
+DATETIME=$(date --rfc-3339=seconds -u)
 
-rm -f container/ghrpmsync server/ghrpmsync
+rm -f container/ghpkgsync server/ghpkgsync
 cd server
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -buildmode=exe -o ghrpmsync
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GOAMD64=v2 go build -ldflags="-s -w -X 'main.Version=${VERSION}'" -trimpath -buildmode=exe
 cd ../container
-mv ../server/ghrpmsync .
+mv ../server/ghpkgsync .
 podman build \
     --squash \
     --no-cache \
@@ -17,7 +17,7 @@ podman build \
     --label "org.opencontainers.image.created=${DATETIME}" \
     --label "org.opencontainers.image.version=${VERSION}" \
     --label "org.opencontainers.image.revision=${REVISION}" \
-    -t ghcr.io/ecnepsnai/ghrpmsync:latest \
-    -t ghcr.io/ecnepsnai/ghrpmsync:${VERSION} \
+    -t ghcr.io/ecnepsnai/ghpkgsync:latest \
+    -t ghcr.io/ecnepsnai/ghpkgsync:${VERSION} \
     .
-rm -f ghrpmsync
+rm -f ghpkgsync

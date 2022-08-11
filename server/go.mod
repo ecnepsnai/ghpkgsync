@@ -1,4 +1,4 @@
-module github.com/ecnepsnai/ghrpmsync
+module github.com/ecnepsnai/ghpkgsync
 
 go 1.18
 

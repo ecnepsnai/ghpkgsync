@@ -10,7 +10,7 @@ import (
 	"github.com/ecnepsnai/web/router"
 )
 
-var log = logtic.Log.Connect("ghrpnsync")
+var log = logtic.Log.Connect("ghpkgsync")
 
 var Config struct {
 	GithubUsername      string
@@ -43,31 +43,20 @@ func main() {
 		"YumRepoBaseurl":      Config.YumRepoBaseurl,
 	})
 
-	info, err := os.Stat("repo")
-	if err != nil {
-		if os.IsNotExist(err) {
-			if err := os.Mkdir("repo", os.ModePerm); err != nil {
-				log.PPanic("error creating repo directory", map[string]interface{}{
-					"error": err.Error(),
-				})
-			}
-			log.Info("Making repo directory")
-		} else {
-			log.PPanic("repo directory not accessible", map[string]interface{}{
-				"error": err.Error(),
-			})
-		}
-	} else if !info.IsDir() {
-		log.Panic("repo directory is not a directory")
-	}
+	assertDir("repo")
+	assertDir("repo/rpm")
+	assertDir("repo/deb")
 
-	makeRepoFile()
+	makeRPMRepoFile()
 	pullRepos()
+	syncRPMRepo()
+	syncDEBRepo()
 
 	runtime.GC()
 
 	server := router.New()
-	server.ServeFiles("repo", "/rpm")
+	server.ServeFiles("repo/rpm", "/rpm")
+	server.ServeFiles("repo/deb", "/deb")
 	server.Handle("POST", "/gh_webhook", acceptWebhook)
 
 	go func(s *router.Server) {
@@ -80,7 +69,7 @@ func main() {
 			log.Panic("error starting http server: %s", err.Error())
 		}
 	}(server)
-	for true {
+	for {
 		time.Sleep(1 * time.Minute)
 	}
 }
@@ -96,4 +85,30 @@ func getEnv(name string, required bool) string {
 		log.Fatal("Missing required environment variable: %s", name)
 	}
 	return value
+}
+
+func assertDir(dirPath string) {
+	info, err := os.Stat(dirPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
+				log.PPanic("error creating directory", map[string]interface{}{
+					"path":  dirPath,
+					"error": err.Error(),
+				})
+			}
+			log.PInfo("Making directory", map[string]interface{}{
+				"path": dirPath,
+			})
+		} else {
+			log.PPanic("directory not accessible", map[string]interface{}{
+				"path":  dirPath,
+				"error": err.Error(),
+			})
+		}
+	} else if !info.IsDir() {
+		log.PPanic("directory is not a directory", map[string]interface{}{
+			"path": dirPath,
+		})
+	}
 }

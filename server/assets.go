@@ -16,11 +16,20 @@ import (
 func downloadAsset(repo GithubRepositoryType, asset GithubAssetType) (bool, error) {
 	traceStart := time.Now()
 
-	if !strings.HasSuffix(asset.Name, ".rpm") {
+	isRPM := strings.HasSuffix(asset.Name, ".rpm")
+	isDEB := strings.HasSuffix(asset.Name, ".deb")
+
+	if !isRPM && !isDEB {
 		return false, nil
 	}
 
-	assetPath := path.Join("repo", asset.Name)
+	var assetPath string
+	if isRPM {
+		assetPath = path.Join("repo", "rpm", asset.Name)
+	} else {
+		assetPath = path.Join("repo", "deb", asset.Name)
+	}
+
 	if fileExists(assetPath) {
 		log.PDebug("Asset already downloaded", map[string]interface{}{
 			"path": assetPath,
@@ -78,7 +87,8 @@ func downloadAsset(repo GithubRepositoryType, asset GithubAssetType) (bool, erro
 
 func downloadReleaseAssets(repo GithubRepositoryType, release GithubReleaseType) {
 	wg := sync.WaitGroup{}
-	needSync := false
+	needRPMSync := false
+	needDEBSync := false
 	wg.Add(len(release.Assets))
 	for _, asset := range release.Assets {
 		go func(r GithubRepositoryType, a GithubAssetType) {
@@ -90,13 +100,20 @@ func downloadReleaseAssets(repo GithubRepositoryType, release GithubReleaseType)
 				})
 			}
 			if didDownload {
-				needSync = true
+				if strings.HasSuffix(a.Name, ".rpm") {
+					needRPMSync = true
+				} else if strings.HasSuffix(a.Name, ".deb") {
+					needDEBSync = true
+				}
 			}
 			wg.Done()
 		}(repo, asset)
 	}
 	wg.Wait()
-	if needSync {
-		syncRepo()
+	if needRPMSync {
+		syncRPMRepo()
+	}
+	if needDEBSync {
+		syncDEBRepo()
 	}
 }

@@ -7,21 +7,21 @@ import (
 	"path"
 )
 
-func syncRepo() {
+func syncRPMRepo() {
 	cmd := exec.Command("/usr/bin/createrepo_c", ".")
-	cmd.Dir = "repo"
+	cmd.Dir = "repo/rpm"
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.PError("Error syncing repository", map[string]interface{}{
+		log.PError("Error syncing rpm repository", map[string]interface{}{
 			"error":  err.Error(),
 			"output": string(output),
 		})
 		return
 	}
-	log.Info("Synced repository")
+	log.Info("Synced rpm repository")
 }
 
-func makeRepoFile() {
+func makeRPMRepoFile() {
 	repoFileDataTemplate := `[%s]
 name=%s
 baseurl=%s
@@ -29,9 +29,9 @@ enabled=1
 gpgcheck=0`
 	repoFileData := fmt.Sprintf(repoFileDataTemplate, Config.YumRepoID, Config.YumRepoDescription, Config.YumRepoBaseurl)
 
-	err := os.WriteFile(path.Join("repo", Config.YumRepoID+".repo"), []byte(repoFileData), os.ModePerm)
+	err := os.WriteFile(path.Join("repo", "rpm", Config.YumRepoID+".repo"), []byte(repoFileData), os.ModePerm)
 	if err != nil {
-		log.PError("Error writing repo file", map[string]interface{}{
+		log.PError("Error writing rpm repo file", map[string]interface{}{
 			"error": err.Error(),
 		})
 	}

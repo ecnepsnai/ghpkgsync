@@ -1,4 +1,4 @@
 server/repo
-server/ghrpmsync
-container/ghrpmsync
-server/ghrpmsync.env
+server/ghpkgsync
+container/ghpkgsync
+server/ghpkgsync.env
