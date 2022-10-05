@@ -5,10 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"fmt"
 	"math/big"
 	"os"
@@ -52,22 +50,12 @@ func startHTTPS(server *router.Server) error {
 	}
 
 	pub := pKey.(crypto.Signer).Public()
-	serial := big.NewInt(1)
-
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(pub)
-	if err != nil {
-		return fmt.Errorf("crypto error: %s", err.Error())
-	}
-	h := sha1.Sum(publicKeyBytes)
-
 	tpl := &x509.Certificate{
-		SerialNumber:          serial,
-		Subject:               pkix.Name{CommonName: "ghrpmsync"},
-		NotBefore:             time.Unix(0, 0),
+		SerialNumber:          &big.Int{},
+		NotBefore:             time.Now().UTC().AddDate(-100, 0, 0),
 		NotAfter:              time.Now().UTC().AddDate(100, 0, 0),
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageDataEncipherment,
 		BasicConstraintsValid: true,
-		SubjectKeyId:          h[:],
 	}
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, tpl, tpl, pub, pKey)

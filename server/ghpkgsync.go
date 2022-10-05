@@ -2,9 +2,7 @@ package main
 
 import (
 	"os"
-	"runtime"
 	"strings"
-	"time"
 
 	"github.com/ecnepsnai/logtic"
 	"github.com/ecnepsnai/web/router"
@@ -45,18 +43,13 @@ func main() {
 
 	assertDir("repo")
 	assertDir("repo/rpm")
-	assertDir("repo/deb")
 
 	makeRPMRepoFile()
 	pullRepos()
 	syncRPMRepo()
-	syncDEBRepo()
-
-	runtime.GC()
 
 	server := router.New()
 	server.ServeFiles("repo/rpm", "/rpm")
-	server.ServeFiles("repo/deb", "/deb")
 	server.Handle("POST", "/gh_webhook", acceptWebhook)
 
 	go func(s *router.Server) {
@@ -64,13 +57,8 @@ func main() {
 			log.Panic("error starting https server: %s", err.Error())
 		}
 	}(server)
-	go func(s *router.Server) {
-		if err := startHTTP(s); err != nil {
-			log.Panic("error starting http server: %s", err.Error())
-		}
-	}(server)
-	for {
-		time.Sleep(1 * time.Minute)
+	if err := startHTTP(server); err != nil {
+		log.Panic("error starting http server: %s", err.Error())
 	}
 }
 

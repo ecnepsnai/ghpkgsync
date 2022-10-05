@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ecnepsnai/logtic"
@@ -17,18 +16,12 @@ func downloadAsset(repo GithubRepositoryType, asset GithubAssetType) (bool, erro
 	traceStart := time.Now()
 
 	isRPM := strings.HasSuffix(asset.Name, ".rpm")
-	isDEB := strings.HasSuffix(asset.Name, ".deb")
 
-	if !isRPM && !isDEB {
+	if !isRPM {
 		return false, nil
 	}
 
-	var assetPath string
-	if isRPM {
-		assetPath = path.Join("repo", "rpm", asset.Name)
-	} else {
-		assetPath = path.Join("repo", "deb", asset.Name)
-	}
+	assetPath := path.Join("repo", "rpm", asset.Name)
 
 	if fileExists(assetPath) {
 		log.PDebug("Asset already downloaded", map[string]interface{}{
@@ -74,6 +67,8 @@ func downloadAsset(repo GithubRepositoryType, asset GithubAssetType) (bool, erro
 		return false, fmt.Errorf("bad size")
 	}
 
+	f.Sync()
+
 	log.PInfo("Downloaded asset", map[string]interface{}{
 		"url":      url,
 		"path":     assetPath,
@@ -86,34 +81,20 @@ func downloadAsset(repo GithubRepositoryType, asset GithubAssetType) (bool, erro
 }
 
 func downloadReleaseAssets(repo GithubRepositoryType, release GithubReleaseType) {
-	wg := sync.WaitGroup{}
 	needRPMSync := false
-	needDEBSync := false
-	wg.Add(len(release.Assets))
 	for _, asset := range release.Assets {
-		go func(r GithubRepositoryType, a GithubAssetType) {
-			didDownload, err := downloadAsset(r, a)
-			if err != nil {
-				log.PError("Error downloading asset", map[string]interface{}{
-					"asset": a.ID,
-					"error": err.Error(),
-				})
-			}
-			if didDownload {
-				if strings.HasSuffix(a.Name, ".rpm") {
-					needRPMSync = true
-				} else if strings.HasSuffix(a.Name, ".deb") {
-					needDEBSync = true
-				}
-			}
-			wg.Done()
-		}(repo, asset)
+		didDownload, err := downloadAsset(repo, asset)
+		if err != nil {
+			log.PError("Error downloading asset", map[string]interface{}{
+				"asset": asset.ID,
+				"error": err.Error(),
+			})
+		}
+		if didDownload && strings.HasSuffix(asset.Name, ".rpm") {
+			needRPMSync = true
+		}
 	}
-	wg.Wait()
 	if needRPMSync {
 		syncRPMRepo()
-	}
-	if needDEBSync {
-		syncDEBRepo()
 	}
 }

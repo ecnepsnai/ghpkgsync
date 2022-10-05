@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 )
 
 func syncRPMRepo() {
@@ -19,6 +20,7 @@ func syncRPMRepo() {
 		return
 	}
 	log.Info("Synced rpm repository")
+	runtime.GC()
 }
 
 func makeRPMRepoFile() {
