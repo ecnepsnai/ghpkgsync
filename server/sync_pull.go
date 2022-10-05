@@ -4,24 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 )
 
 func pullRepos() {
 	start := time.Now()
-	wg := sync.WaitGroup{}
-	wg.Add(len(Config.GithubRepos))
-	for _, r := range Config.GithubRepos {
-		go func(repo string) {
-			log.PDebug("Pulling releases from repo", map[string]interface{}{
-				"repo": repo,
-			})
-			PullRepo(repo)
-			wg.Done()
-		}(r)
+	for _, repo := range Config.GithubRepos {
+		log.PDebug("Pulling releases from repo", map[string]interface{}{
+			"repo": repo,
+		})
+		PullRepo(repo)
 	}
-	wg.Wait()
 	log.Debug("Finished pulling release assets from repos in %s", time.Since(start))
 }
 
